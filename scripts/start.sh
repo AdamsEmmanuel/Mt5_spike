@@ -1,6 +1,5 @@
 #!/bin/bash
-# Container entrypoint. Starts the report server first so Render's health check
-# passes while MT5 is still logging in.
+# Container entrypoint. Starts the report server first so Render's health check passes.
 set -uo pipefail
 export WINEPREFIX=/opt/wineprefix WINEARCH=win64 WINEDEBUG=-all \
        WINEDLLOVERRIDES="mscoree,mshtml=" DISPLAY=:99
@@ -21,11 +20,10 @@ TERM_UNIX="$(find "$WINEPREFIX/drive_c" -iname terminal64.exe | head -1)"
 if [ -z "$TERM_UNIX" ]; then
   echo "terminal64.exe not found; image is missing MT5" | tee /tmp/spike/login.out
 else
-  # Convert /opt/wineprefix/drive_c/... to C:\... for the MetaTrader5 package.
   REL="${TERM_UNIX#$WINEPREFIX/drive_c/}"
   export MT5_PATH="C:\\$(echo "$REL" | tr '/' '\\')"
   echo "== login check (terminal: $MT5_PATH)"
-  timeout 300 wine64 'C:\Program Files\Python311\python.exe' -u 'Z:\opt\spike\check_login.py' \
+  timeout 300 wine 'C:\Python311\python.exe' -u 'Z:\opt\spike\check_login.py' \
     >/tmp/spike/login.out 2>&1
   echo "login check exit code: $?" | tee -a /tmp/spike/login.out
 fi
